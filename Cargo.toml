@@ -1,0 +1,30 @@
+[package]
+name = "beacon_light_client"
+authors = ["Dan Buchholz <dbuchholz30@gmail.com>"]
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+base64 = "0.13.0"
+ethereum-types = "0.12.1"
+futures = "0.3"
+log = "0.4"
+reqwest = { version = "0.11", features = ["json"]}
+serde = { version = "1.0", features = ["derive"] }
+serde_derive = "1.0.130"
+serde_json = "1.0"
+slot_clock = { git = "https://github.com/sigp/lighthouse", branch = "stable" }
+pretty_env_logger = "0.4.0"
+thiserror = "1.0"
+tokio = { version = "1", features = ["full"] }
+types = { git = "https://github.com/sigp/lighthouse", branch = "stable" }
+warp = "0.3"
+
+[patch]
+[patch.crates-io]
+tree_hash = { git = "https://github.com/sigp/lighthouse", branch = "stable" }
+tree_hash_derive = { git = "https://github.com/sigp/lighthouse", branch = "stable" }
+eth2_ssz = { git = "https://github.com/sigp/lighthouse", branch = "stable" }
+eth2_ssz_derive = { git = "https://github.com/sigp/lighthouse", branch = "stable" }
+eth2_ssz_types = { git = "https://github.com/sigp/lighthouse", branch = "stable" }
+eth2_hashing = { git = "https://github.com/sigp/lighthouse", branch = "stable" }
