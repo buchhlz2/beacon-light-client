@@ -5,20 +5,27 @@
 pub use types::{Slot, Epoch, Hash256};
 pub use serde::{Deserialize, Serialize};
 
-// #[derive(Debug, PartialEq, Eq, Hash, Clone, Serialize, Deserialize)]
-// pub struct BeaconBlockHeader {
-//     pub slot: Slot,
-//     pub proposer_index: u64,
-//     pub parent_root: Hash256,
-//     pub state_root: Hash256,
-//     pub body_root: Hash256,
-// }
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Serialize, Deserialize)]
 pub struct BeaconBlockHeader {
-    pub userId: u64,
-    pub id: u64,
-    pub title: String,
-    pub completed: bool
+    pub slot: Slot,
+    pub proposer_index: u64,
+    pub parent_root: Hash256,
+    pub state_root: Hash256,
+    pub body_root: Hash256,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct BlockHeaderAndSignature {
+    pub message: BeaconBlockHeader,
+    pub signature: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct BlockHeaderData {
+    pub root: Hash256,
+    pub canonical: bool,
+    // pub header: String,
+    // pub header: BlockHeaderAndSignature,
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Serialize, Deserialize)]

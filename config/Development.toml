@@ -1,0 +1,5 @@
+[server]
+url = "localhost"
+
+[log]
+level = "debug"

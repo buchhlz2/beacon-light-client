@@ -6,3 +6,4 @@
 pub mod api_client;
 pub mod light_client_types;
 pub mod timer;
+pub mod settings;
