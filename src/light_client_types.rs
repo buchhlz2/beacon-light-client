@@ -24,8 +24,7 @@ pub struct BlockHeaderAndSignature {
 pub struct BlockHeaderData {
     pub root: Hash256,
     pub canonical: bool,
-    // pub header: String,
-    // pub header: BlockHeaderAndSignature,
+    pub header: BlockHeaderAndSignature,
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Serialize, Deserialize)]

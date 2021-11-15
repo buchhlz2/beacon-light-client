@@ -36,7 +36,7 @@ async fn main() -> Result<(), HttpError> {
     let beacon_api_light_client: BeaconLightClient = BeaconLightClient::new(&CONFIG.server.url).await;
 
     let header = beacon_api_light_client.get_block_header().await;
-    println!("{:?}", header);
+    println!("Main, header: {:?}", header);
 
     Ok(())
 }
