@@ -1,5 +1,5 @@
 [server]
-url = "https://20mjLjvo1chCq0H8i19svMTjAfA:e4e92fbcf835ff622cf987d1a2959183@eth2-beacon-mainnet.infura.io"
+url = "BEACON_NODE_URL_HERE"
 
 [log]
 level = "debug"
