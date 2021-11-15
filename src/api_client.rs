@@ -5,7 +5,6 @@ use serde_json::{self, Error as JsonError, Value, Map};
 use thiserror::Error;
 use std::fmt;
 pub use crate::light_client_types::{BlockHeaderData};
-pub use crate::timer::Timer;
 pub use hex;
 
 const API_PREFIX: &str = "eth";
@@ -22,7 +21,7 @@ pub enum ApiClientError {
     SerdeError(#[from] JsonError),
 }
 
-type ApiResult<T> = Result<T, ApiClientError>;
+pub type ApiResult<T> = Result<T, ApiClientError>;
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 #[serde(bound = "T: Serialize + DeserializeOwned")]
@@ -72,7 +71,6 @@ impl BeaconLightClient {
 
     // pub async fn get_light_client_update(&self) -> ApiResult<LightClientUpdate> {
     //     // let endpoint = format!("{}/v1/lightclient/best_update/:periods", self.base_url);
-    //     let endpoint = format!("{}", self.base_url);
     //     let result: LightClientUpdate = LightClientUpdate {
     //         header: self.get_block_header().await?,
     //         next_sync_committee: String::from("committee"),

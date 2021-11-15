@@ -5,6 +5,6 @@ url = "https://20mjLjvo1chCq0H8i19svMTjAfA:e4e92fbcf835ff622cf987d1a2959183@eth2
 level = "debug"
 
 [beacon_chain]
-seconds_per_slot = 1
-slots_per_epoch = 3
+seconds_per_slot = 12
+slots_per_epoch = 32
 genesis_time = 1606824023

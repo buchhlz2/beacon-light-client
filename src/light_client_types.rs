@@ -35,16 +35,3 @@ pub struct LightClientUpdate {
     // TO DO: change to `ForkVersion`
     pub fork_version: [u8; 4]
 }
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct TBlockHeaderData {
-    pub root: Hash256,
-    pub canonical: bool,
-    pub header: TBlockHeaderAndSignature,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct TBlockHeaderAndSignature {
-    pub message: BeaconBlockHeader,
-    pub signature: String,
-}

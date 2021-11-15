@@ -7,36 +7,23 @@
 
 use std::fs;
 use std::path::PathBuf;
+use std::error::Error;
 use reqwest::{Client, Error as HttpError};
-use beacon_light_client::light_client_types::*;
-use beacon_light_client::timer::Timer;
-use beacon_light_client::api_client::BeaconLightClient;
-use beacon_light_client::settings;
-
-#[macro_use]
-extern crate lazy_static;
-lazy_static! {
-    static ref CONFIG: settings::Settings =
-        settings::Settings::new().expect("config can be loaded");
-}
+use beacon_light_client::settings::Settings;
+use beacon_light_client::monitor;
 
 use pretty_env_logger;
 #[macro_use] extern crate log;
 
 #[tokio::main]
-async fn main() -> Result<(), HttpError> {
+async fn main() -> Result<(), Box<dyn Error>> {
     pretty_env_logger::init();
+
+    let config: Settings = Settings::new().expect("config file can be loaded");
     println!("Initializing light client");
-    println!("Running in ENV `{}` at URL `{}`\n", CONFIG.env, CONFIG.server.url);
+    println!("Running in ENV `{}` at URL `{}`\n", config.env, config.server.url);
 
-    let beacon_chain_config = &CONFIG.beacon_chain;
-
-    let timer: &Timer = &Timer::new(beacon_chain_config.seconds_per_slot, beacon_chain_config.slots_per_epoch, beacon_chain_config.genesis_time);
-    
-    let beacon_api_light_client: BeaconLightClient = BeaconLightClient::new(&CONFIG.server.url).await;
-
-    let header = beacon_api_light_client.get_block_header().await;
-    println!("Main, header: {:#?}", header);
+    monitor::run(&config).await;
 
     Ok(())
 }
