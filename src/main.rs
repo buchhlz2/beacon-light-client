@@ -27,7 +27,7 @@ use pretty_env_logger;
 async fn main() -> Result<(), HttpError> {
     pretty_env_logger::init();
     println!("Initializing light client");
-    println!("Running in ENV `{}` at URL `{}`", CONFIG.env, CONFIG.server.url);
+    println!("Running in ENV `{}` at URL `{}`\n", CONFIG.env, CONFIG.server.url);
 
     let beacon_chain_config = &CONFIG.beacon_chain;
 
@@ -36,7 +36,7 @@ async fn main() -> Result<(), HttpError> {
     let beacon_api_light_client: BeaconLightClient = BeaconLightClient::new(&CONFIG.server.url).await;
 
     let header = beacon_api_light_client.get_block_header().await;
-    println!("Main, header: {:?}", header);
+    println!("Main, header: {:#?}", header);
 
     Ok(())
 }
