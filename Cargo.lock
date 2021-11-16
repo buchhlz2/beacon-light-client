@@ -63,6 +63,7 @@ version = "0.1.0"
 dependencies = [
  "base64",
  "config",
+ "eth2_serde_utils",
  "ethereum-types",
  "futures",
  "hex",

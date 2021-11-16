@@ -1,11 +1,9 @@
-use reqwest::{Client, Error as HttpError};
-use serde::de::DeserializeOwned;
+pub use reqwest::{Client, Error as HttpError};
+pub use serde::de::DeserializeOwned;
 pub use serde::{Deserialize, Serialize};
-use serde_json::{self, Error as JsonError, Value, Map};
-use thiserror::Error;
-use std::fmt;
-pub use crate::light_client_types::{BlockHeaderData};
-pub use hex;
+pub use serde_json::{self, Error as JsonError, Value, Map};
+pub use thiserror::Error;
+pub use crate::light_client_types::{Attestation, BlockHeaderData, CommitteeData, EthSpec, Hash256, LightClientUpdate};
 
 const API_PREFIX: &str = "eth";
 const ACCEPT_HEADER: &'static str = "Accept";
@@ -36,22 +34,25 @@ impl<T: Serialize + DeserializeOwned> From<T> for ApiResponseData<T> {
 }
 
 #[derive(Clone, Debug)]
-pub struct BeaconLightClient {
+pub struct BeaconApiLightClient {
     http_client: Client,
     base_url: String
 }
 
 pub async fn get_call<T: Serialize + DeserializeOwned>(client: &Client, endpoint: &str) -> ApiResult<T> { 
-    let response = client.get(endpoint).header(ACCEPT_HEADER, ACCEPT_HEADER_VALUE).send().await?;
-    let body = response.bytes().await?;
-    let result = serde_json::from_slice::<ApiResponseData<T>>(&body).map(|resp| resp.data);
-    match result {
-        Ok(result) => Ok(result),
-        Err(err) => Err(err.into())
-    }
+    let request = client.get(endpoint).header(ACCEPT_HEADER, ACCEPT_HEADER_VALUE).send().await?;
+    let response: ApiResponseData<T> = request.json().await?;
+
+    Ok(response.data)
+    // let body = request.bytes().await?;
+    // let result = serde_json::from_slice::<ApiResponseData<T>>(&body).map(|resp| resp.data);
+    // match result {
+    //     Ok(result) => Ok(result),
+    //     Err(err) => Err(err.into())
+    // }
 }
 
-impl BeaconLightClient {
+impl BeaconApiLightClient {
     pub async fn new(base_url: &String) -> Self {
         Self {
             http_client: Client::new(),
@@ -59,7 +60,7 @@ impl BeaconLightClient {
         }
     }
     
-    pub async fn get_block_header(&self) -> ApiResult<BlockHeaderData> { 
+    pub async fn get_latest_headers(&self) -> ApiResult<BlockHeaderData> { 
         let endpoint = format!("{}/v1/beacon/headers", self.base_url);
         let result = get_call::<Vec<BlockHeaderData>>(&self.http_client, &endpoint).await?;
         let block_header_data = result.into_iter().nth(0);
@@ -69,10 +70,26 @@ impl BeaconLightClient {
         }
     }
 
+    pub async fn get_latest_header(&self) -> ApiResult<BlockHeaderData> { 
+        let endpoint = format!("{}/v1/beacon/headers/head", self.base_url);
+        let block_header_data = get_call::<BlockHeaderData>(&self.http_client, &endpoint).await?;
+
+        Ok(block_header_data)
+    }
+
+    pub async fn get_committees_at_state_root(&self, state_root: Hash256) -> ApiResult<Vec<CommitteeData>> {
+        let endpoint = format!("{}/v1/beacon/states/{:#010x}/committees", self.base_url, &state_root);
+        let committees = get_call::<Vec<CommitteeData>>(&self.http_client, &endpoint).await?;
+        
+        Ok(committees)
+    }
+
     // pub async fn get_light_client_update(&self) -> ApiResult<LightClientUpdate> {
     //     // let endpoint = format!("{}/v1/lightclient/best_update/:periods", self.base_url);
+    //     let header_data = self.get_latest_header().await?;
+
     //     let result: LightClientUpdate = LightClientUpdate {
-    //         header: self.get_block_header().await?,
+    //         header: header_data.header.message,
     //         next_sync_committee: String::from("committee"),
     //         next_sync_committee_branch: vec!(Hash256::random()),
     //         finality_header: None,
@@ -81,12 +98,7 @@ impl BeaconLightClient {
     //         sync_committee_signature: String::from("signature"),
     //         fork_version: [1,2,3,4]
     //     };
+    //     println!("{:#?}", result);
     //     Ok(result)
     // }
-}
-
-fn decode_string_hex_to_bytes(hex: String) -> [u8; 32] {
-    let mut bytes = [0u8; 32];
-    hex::decode_to_slice(hex.trim_start_matches("0x"), &mut bytes).unwrap();
-    return bytes
 }

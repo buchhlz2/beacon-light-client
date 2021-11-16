@@ -1,8 +1,4 @@
-#![allow(dead_code)]
-#![allow(unused_variables)]
-#![allow(unused_imports)]
-
-pub use types::{BeaconBlockHeader, Epoch, Hash256, SignatureBytes, Slot};
+pub use types::{Attestation, BeaconBlockHeader, Epoch, EthSpec, ForkVersion, Hash256, SignatureBytes, Slot};
 pub use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -32,6 +28,15 @@ pub struct LightClientUpdate {
     pub sync_committee_bits: Vec<u8>,
     // TO DO: change to `AggregateSignature`
     pub sync_committee_signature: String,
-    // TO DO: change to `ForkVersion`
-    pub fork_version: [u8; 4]
+    // ForkVersion is a [u8; 4]
+    pub fork_version: ForkVersion
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CommitteeData {
+    #[serde(with = "eth2_serde_utils::quoted_u64")]
+    pub index: u64,
+    pub slot: Slot,
+    #[serde(with = "eth2_serde_utils::quoted_u64_vec")]
+    pub validators: Vec<u64>,
 }

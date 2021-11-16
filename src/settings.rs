@@ -1,5 +1,5 @@
 use config::{Config, ConfigError, Environment, File};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize};
 use std::fmt;
 
 const CONFIG_FILE_PATH: &str = "./config/Default.toml";

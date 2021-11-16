@@ -1,7 +1,3 @@
-#![allow(dead_code)]
-#![allow(unused_variables)]
-#![allow(unused_imports)]
-
 use types::Epoch;
 use slot_clock::{Slot, SlotClock, SystemTimeSlotClock};
 use tokio::time::{sleep, Duration};
