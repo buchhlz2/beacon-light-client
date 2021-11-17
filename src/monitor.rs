@@ -19,7 +19,7 @@ impl Monitor {
     }
 
     pub async fn run(&self) -> ApiResult<()> {
-        let beacon_api_light_client: BeaconApiLightClient = BeaconApiLightClient::new(&self.config.server.url).await;
+        let beacon_api_light_client: BeaconApiLightClient = BeaconApiLightClient::new(&self.config.node.url);
 
         loop {
             let start = Instant::now();

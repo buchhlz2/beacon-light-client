@@ -35,8 +35,8 @@ impl<T: Serialize + DeserializeOwned> From<T> for ApiResponseData<T> {
 
 #[derive(Clone, Debug)]
 pub struct BeaconApiLightClient {
-    http_client: Client,
-    base_url: String
+    pub http_client: Client,
+    pub base_url: String
 }
 
 pub async fn get_call<T: Serialize + DeserializeOwned>(client: &Client, endpoint: &str) -> ApiResult<T> { 
@@ -53,7 +53,7 @@ pub async fn get_call<T: Serialize + DeserializeOwned>(client: &Client, endpoint
 }
 
 impl BeaconApiLightClient {
-    pub async fn new(base_url: &String) -> Self {
+    pub fn new(base_url: &String) -> Self {
         Self {
             http_client: Client::new(),
             base_url: base_url.to_string() + "/" + API_PREFIX

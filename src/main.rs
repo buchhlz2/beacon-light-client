@@ -7,6 +7,7 @@
 
 use beacon_light_client::settings::Settings;
 use beacon_light_client::monitor::Monitor;
+use beacon_light_client::server::BeaconApiServer;
 use pretty_env_logger;
 use std::error::Error;
 
@@ -16,10 +17,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let config: Settings = Settings::new().expect("config file can be loaded");
     println!("Initializing light client");
-    println!("Running in ENV `{}` at URL `{}`\n", config.env, config.server.url);
+    println!("Running in ENV `{}` at Server `localhost:{}` and external Node URL `{}`\n", config.env, config.server.port, config.node.url);
 
-    let monitor = Monitor::from_config(&config);
-    monitor.run().await;
+    let server = BeaconApiServer::from_config(&config);
+    server.run().await;
+
+    // let monitor = Monitor::from_config(&config);
+    // monitor.run().await;
 
     Ok(())
 }

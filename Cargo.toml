@@ -23,6 +23,7 @@ thiserror = "1.0"
 tokio = { version = "1", features = ["full"] }
 types = { git = "https://github.com/sigp/lighthouse", branch = "stable" }
 warp = "0.3"
+axum = "0.3.3"
 
 [patch]
 [patch.crates-io]

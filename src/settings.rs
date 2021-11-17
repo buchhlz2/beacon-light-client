@@ -7,6 +7,7 @@ const CONFIG_FILE_PREFIX: &str = "./config/";
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct Settings {
+    pub node: Node,
     pub server: Server,
     pub log: Log,
     pub env: ENV,
@@ -26,9 +27,15 @@ pub struct Log {
 }
 
 #[derive(Debug, Deserialize, Clone)]
-pub struct Server {
+pub struct Node {
     // pub port: u16,
     pub url: String,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct Server {
+    pub port: u16,
+    // pub url: String,
 }
 
 #[derive(Clone, Debug, Deserialize)]
