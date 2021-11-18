@@ -1,9 +1,9 @@
-pub use reqwest::{Client, Error as HttpError};
+pub use reqwest::{Client, Error as HttpError, header::ACCEPT};
 pub use serde::de::DeserializeOwned;
 pub use serde::{Deserialize, Serialize};
 pub use serde_json::{self, Error as JsonError, Value, Map};
 pub use thiserror::Error;
-pub use crate::light_client_types::{Attestation, BlockHeaderData, CommitteeData, EthSpec, Hash256, LightClientUpdate, RootData, SyncCommitteeByValidatorIndices, BeaconState, MainnetEthSpec};
+pub use crate::light_client_types::{Attestation, BlockHeaderData, BlockId, CommitteeData, Epoch, EthSpec, ForkVersionedResponse, GenericResponse, Hash256, LightClientUpdate, RootData, SyncCommitteeByValidatorIndices, SignedBeaconBlock, BeaconState, MainnetEthSpec, Slot};
 pub use std::net::SocketAddr;
         
 const API_PREFIX: &str = "eth";
@@ -16,24 +16,12 @@ pub enum ApiClientError {
     #[error("API error: {0}")]
     ApiError(String),
     #[error("http error: {0}")]
-    HttpClient(#[from] HttpError),
+    HttpClientError(#[from] HttpError),
     #[error("json error: {0}")]
     SerdeError(#[from] JsonError),
 }
 
 pub type ApiResult<T> = Result<T, ApiClientError>;
-
-#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
-#[serde(bound = "T: Serialize + DeserializeOwned")]
-pub struct ApiResponseData<T> {
-    pub data: T
-}
-
-impl<T: Serialize + DeserializeOwned> From<T> for ApiResponseData<T> {
-    fn from(data: T) -> Self {
-        Self { data }
-    }
-}
 
 #[derive(Clone, Debug)]
 pub struct BeaconApiClient {
@@ -42,12 +30,12 @@ pub struct BeaconApiClient {
 }
 
 pub async fn get_call<T: Serialize + DeserializeOwned>(client: &Client, endpoint: &str) -> ApiResult<T> { 
-    let request = client.get(endpoint).header(ACCEPT_HEADER, ACCEPT_HEADER_VALUE).send().await?;
-    let response: ApiResponseData<T> = request.json().await?;
+    let response = client.get(endpoint).header(ACCEPT_HEADER, ACCEPT_HEADER_VALUE).send().await?;
+    let result = response.json().await?;
 
-    Ok(response.data)
+    Ok(result)
     // let body = request.bytes().await?;
-    // let result = serde_json::from_slice::<ApiResponseData<T>>(&body).map(|resp| resp.data);
+    // let result = serde_json::from_slice::<GenericResponse<T>>(&body).map(|resp| resp.data);
     // match result {
     //     Ok(result) => Ok(result),
     //     Err(err) => Err(err.into())
@@ -56,7 +44,7 @@ pub async fn get_call<T: Serialize + DeserializeOwned>(client: &Client, endpoint
 
 // pub async fn get_call_ssz<T: Serialize + DeserializeOwned>(client: &Client, endpoint: &str) -> ApiResult<T> { 
 //     let request = client.get(endpoint).header(ACCEPT_HEADER, ACCEPT_HEADER_VALUE_SSZ).send().await?;
-//     let response: ApiResponseData<T> = request.json().await?;
+//     let response: GenericResponse<T> = request.json().await?;
 
 //     Ok(response.data)
 // }
@@ -71,7 +59,7 @@ impl BeaconApiClient {
     
     pub async fn get_latest_headers(&self) -> ApiResult<BlockHeaderData> { 
         let endpoint = format!("{}/v1/beacon/headers", self.base_url);
-        let result = get_call::<Vec<BlockHeaderData>>(&self.http_client, &endpoint).await?;
+        let result = get_call::<GenericResponse<Vec<BlockHeaderData>>>(&self.http_client, &endpoint).await?.data;
         let block_header_data = result.into_iter().nth(0);
         match block_header_data {
             Some(block_header_data) => Ok(block_header_data),
@@ -81,39 +69,53 @@ impl BeaconApiClient {
 
     pub async fn get_latest_header(&self) -> ApiResult<BlockHeaderData> { 
         let endpoint = format!("{}/v1/beacon/headers/head", self.base_url);
-        let block_header_data = get_call::<BlockHeaderData>(&self.http_client, &endpoint).await?;
+        let block_header_data = get_call::<GenericResponse<BlockHeaderData>>(&self.http_client, &endpoint).await?.data;
 
         Ok(block_header_data)
     }
 
     pub async fn get_committees_at_state(&self, state_root: Hash256) -> ApiResult<Vec<CommitteeData>> {
         let endpoint = format!("{}/v1/beacon/states/{:#010x}/committees", self.base_url, &state_root);
-        let committees = get_call::<Vec<CommitteeData>>(&self.http_client, &endpoint).await?;
+        let committees = get_call::<GenericResponse<Vec<CommitteeData>>>(&self.http_client, &endpoint).await?.data;
         
         Ok(committees)
     }
 
-    pub async fn get_sync_committees_at_state(&self, state_root: Hash256) -> ApiResult<SyncCommitteeByValidatorIndices> {
+    pub async fn get_sync_committees_at_state_root(&self, state_root: Hash256) -> ApiResult<SyncCommitteeByValidatorIndices> {
         let endpoint = format!("{}/v1/beacon/states/{:#010x}/sync_committees", self.base_url, &state_root);
-        let committees = get_call::<SyncCommitteeByValidatorIndices>(&self.http_client, &endpoint).await?;
+        let committees = get_call::<GenericResponse<SyncCommitteeByValidatorIndices>>(&self.http_client, &endpoint).await?.data;
+        
+        Ok(committees)
+    }
+    
+    pub async fn get_sync_committees_at_epoch(&self, state_root: Hash256, epoch: Epoch) -> ApiResult<SyncCommitteeByValidatorIndices> {
+        let endpoint = format!("{}/v1/beacon/states/{:#010x}/sync_committees?{}", self.base_url, &state_root, &epoch.to_string());
+        let committees = get_call::<GenericResponse<SyncCommitteeByValidatorIndices>>(&self.http_client, &endpoint).await?.data;
         
         Ok(committees)
     }
 
     pub async fn get_state_root_at_head(&self) -> ApiResult<RootData> {
         let endpoint = format!("{}/v1/beacon/states/head/root", self.base_url);
-        let state_root = get_call::<RootData>(&self.http_client, &endpoint).await?;
+        let state_root = get_call::<GenericResponse<RootData>>(&self.http_client, &endpoint).await?.data;
         
         Ok(state_root)
     }
 
     pub async fn get_state_at_head(&self) -> ApiResult<BeaconState<MainnetEthSpec>> {
         let endpoint = format!("{}/v2/debug/beacon/states/head", self.base_url);
-        let state = get_call::<BeaconState<MainnetEthSpec>>(&self.http_client, &endpoint).await?;
+        let state = get_call::<GenericResponse<BeaconState<MainnetEthSpec>>>(&self.http_client, &endpoint).await?.data;
         
         Ok(state)
     }
 
+    pub async fn get_signed_beacon_block<T: EthSpec>(&self, block_id: BlockId) -> ApiResult<ForkVersionedResponse<SignedBeaconBlock<T>>> {
+        let endpoint = format!("{}/v2/beacon/blocks/{}", self.base_url, block_id.to_string());
+        let signed_block = get_call::<ForkVersionedResponse<SignedBeaconBlock<T>>>(&self.http_client, &endpoint).await?;
+
+        Ok(signed_block)
+    }
+   
     // pub async fn get_light_client_update(&self) -> ApiResult<LightClientUpdate> {
     //     // let endpoint = format!("{}/v1/lightclient/best_update/:periods", self.base_url);
     //     let header_data = self.get_latest_header().await?;
