@@ -116,6 +116,7 @@ dependencies = [
  "serde_derive",
  "serde_json",
  "slot_clock",
+ "state_processing",
  "thiserror",
  "tokio",
  "types",
@@ -1007,6 +1008,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "integer-sqrt"
+version = "0.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "276ec31bcb4a9ee45f58bec6f9ec700ae4cf4f4f8f2fa7e06cb406bd5ffdd770"
+dependencies = [
+ "num-traits 0.2.14",
+]
+
+[[package]]
 name = "ipnet"
 version = "2.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1140,6 +1150,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "59accc507f1338036a0477ef61afdae33cde60840f4dfe481319ce3ad116ddf9"
 dependencies = [
  "autocfg",
+]
+
+[[package]]
+name = "merkle_proof"
+version = "0.2.0"
+source = "git+https://github.com/sigp/lighthouse?branch=stable#fff01b24ddedcd54486e374460855ca20d3dd232"
+dependencies = [
+ "eth2_hashing",
+ "ethereum-types",
+ "lazy_static",
+ "safe_arith",
 ]
 
 [[package]]
@@ -1988,6 +2009,28 @@ name = "spin"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
+
+[[package]]
+name = "state_processing"
+version = "0.2.0"
+source = "git+https://github.com/sigp/lighthouse?branch=stable#fff01b24ddedcd54486e374460855ca20d3dd232"
+dependencies = [
+ "bls",
+ "eth2_hashing",
+ "eth2_ssz",
+ "eth2_ssz_types",
+ "int_to_bytes",
+ "integer-sqrt",
+ "itertools",
+ "lazy_static",
+ "lighthouse_metrics",
+ "merkle_proof",
+ "rayon",
+ "safe_arith",
+ "smallvec",
+ "tree_hash",
+ "types",
+]
 
 [[package]]
 name = "static_assertions"

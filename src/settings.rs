@@ -28,7 +28,7 @@ pub struct Log {
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct Node {
-    // pub port: u16,
+    pub port: u16,
     pub url: String,
 }
 

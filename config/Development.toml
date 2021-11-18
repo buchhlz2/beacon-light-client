@@ -1,5 +1,8 @@
 [server]
-url = "localhost"
+url = "http://localhost:8001"
+
+[beacon_chain]
+seconds_per_slot = 3
 
 [log]
 level = "debug"
