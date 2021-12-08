@@ -12,6 +12,7 @@ pub struct Builder {
     pub config: Settings,
     pub client: BeaconApiClient,
     pub server: LightClientServer,
+    pub chain_spec: ChainSpec,
     pub store: Arc<LightClientStore>
 }
 
@@ -24,24 +25,26 @@ impl Builder {
         let light_client_store: LightClientStore = LightClientStore {
             valid_updates: Arc::new(Vec::new())
         };
+        let chain_spec = ChainSpec::mainnet();
 
         Self {
             timer,
             config: settings,
             client: beacon_api_client,
             server,
+            chain_spec,
             store: Arc::new(light_client_store)
         }
     }
 
-    pub async fn run(&self) -> ApiResult<()> {
+    pub async fn run<T: EthSpec>(&self) -> ApiResult<()> {
         
         // let start = Instant::now();
-        let (slot, epoch) = self.timer.tick_slot().await;
+        let (timer_slot, timer_epoch) = self.timer.tick_slot().await;
         // let elapsed = start.elapsed();
 
         // let state = self.client.get_state_at_head().await?;
-        Builder::build_light_client_update(&self, slot, epoch).await;
+        Builder::build_light_client_update_at_head::<T>(&self, timer_slot, timer_epoch).await;
         // let sync_committee = self.client.get_sync_committees_at_state(block_header).await?;
         
         // let current_sync_committee = state.current_sync_committee();
@@ -56,45 +59,47 @@ impl Builder {
         Ok(())
     }
 
-    pub async fn build_light_client_update(&self, _tmp_slot: Slot, _tmp_epoch: Epoch) {
-        let chainspec = ChainSpec::mainnet();
-        let block_header_data = self.client.get_latest_header().await.unwrap();
-        // TODO: call `deconstruct` on signed block to get `(BeaconBlock<E>, Signature)` instead of using call `get_latest_header`
-        let signed_block = self.client.get_signed_beacon_block::<MainnetEthSpec>(BlockId::Slot(block_header_data.header.message.slot)).await.unwrap();
-        let fork_version = signed_block.version.clone();
-        let (beacon_block, block_signature) = signed_block.data.clone().deconstruct();
-
+    pub async fn build_light_client_update_at_head<T: EthSpec>(&self, _timer_slot: Slot, _timer_epoch: Epoch) {
+        let block_id = BlockId::Head;
+        let (fork_name, signed_block) = self.client.get_signed_beacon_block::<T>(block_id).await.map(|d| (d.version, d.data)).unwrap();
+        let fork_version = self.chain_spec.fork_version_for_name(fork_name.unwrap());
+        let (beacon_block, block_signature) = signed_block.clone().deconstruct();
+        let block_header = beacon_block.block_header();
         // let current_sync_committee = client.get_sync_committees_at_state_root(block_header_data.header.message.state_root).await.unwrap();
-        let current_epoch = beacon_block.slot().epoch(self.config.beacon_chain.slots_per_epoch);
-        let current_period: Period = Period::new(current_epoch.sync_committee_period(&chainspec).unwrap());
+        let current_epoch = beacon_block.epoch();
+        let current_period: Period = Period::new(current_epoch.sync_committee_period(&self.chain_spec).unwrap());
         let next_period = current_period + 1;
-        let next_period_starting_epoch = next_period.start_epoch(&chainspec);
+        let next_period_starting_epoch = next_period.start_epoch(&self.chain_spec);
         let next_sync_committee = self.client.get_sync_committees_at_epoch(beacon_block.state_root(), next_period_starting_epoch).await.unwrap();
         let current_sync_committee_aggregate = beacon_block.body().sync_aggregate().unwrap();
-        let sync_committee_bits = current_sync_committee_aggregate.clone().sync_committee_bits;
-        let sync_committee_signature = current_sync_committee_aggregate.clone().sync_committee_signature;
+        let current_sync_committee_bits = current_sync_committee_aggregate.clone().sync_committee_bits;
+        let current_sync_committee_signature = current_sync_committee_aggregate.clone().sync_committee_signature;
 
-        // let light_client_update: LightClientUpdate = LightClientUpdate {
-
-        // };
+        let light_client_update: LightClientUpdate<T> = LightClientUpdate {
+            header: block_header,
+            sync_committee_bits: current_sync_committee_bits,
+            sync_committee_signature: current_sync_committee_signature,
+            fork_version: fork_version
+        };
         // let current_sync_committee_signature =
     
         // let current_sync_committee = client.current_sync_committee().unwrap().clone();
         // 
-        // let light_client_update: LightClientUpdate<MainnetEthSpec> = LightClientUpdate {
+        // let light_client_update: LightClientUpdate<T> = LightClientUpdate {
         //     header: block_header,
         //     next_sync_committee: next_sync_committee
         // };
         // store.valid_updates.push(light_client_update);
         
         // println!("Block header:\n{:#?}", block_header_data);
-        // println!("Signed block:\n{:#?}", current_sync_committee_aggregate);
+        println!("Beacon block:\n{:#?}", beacon_block);
+        println!("Light client update:\n{:#?}", light_client_update);
         // println!("current_epoch:\n{:?}", current_epoch);
         // println!("current_period:\n{:?}", current_period);
         // println!("next_period:\n{:?}", next_period);
         // println!("next_period_starting_epoch:\n{:?}", next_period_starting_epoch);
         // println!("next_sync_committee:\n{:?}", next_sync_committee);
-        println!("current_sync_committee_aggregate:\n{:?}", current_sync_committee_aggregate);
+        // println!("light_client_update:\n{:#?}", light_client_update);
     }
 }
 

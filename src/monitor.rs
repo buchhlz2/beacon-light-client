@@ -1,5 +1,7 @@
 pub use crate::api_client::{ApiResult, BeaconApiClient};
+pub use crate::light_client_types::MainnetEthSpec;
 pub use crate::timer::Timer;
+pub use crate::builder::Builder;
 pub use crate::settings::Settings;
 use std::time::Instant;
 
@@ -22,18 +24,18 @@ impl Monitor {
         }
     }
 
-    pub async fn run(&self) -> ApiResult<()> {
+    pub async fn run<T>(&self) -> ApiResult<()> {
+        let builder = Builder::from_config(&self.config);
         
         loop {
             let start = Instant::now();
             let (slot, epoch) = self.timer.tick_slot().await;
             let elapsed = start.elapsed();
 
-            let block_header = self.client.get_latest_header().await?;
-
             println!("Time elapsed: {:?} seconds", elapsed);
             println!("epoch: {}, slot: {}", epoch, slot);
-            println!("Header: {:#?}", block_header);
+            
+            builder.run::<MainnetEthSpec>().await;
         }
         
         Ok(())

@@ -1,4 +1,4 @@
-pub use types::{Attestation, BeaconBlockHeader, BeaconState, ChainSpec, Epoch, EthSpec, Eth1Data, ForkName, MainnetEthSpec, ForkVersion, Hash256, SignedBeaconBlock, SignatureBytes, Slot, SyncCommittee};
+pub use types::{AggregateSignature, Attestation, BeaconBlockHeader, BeaconState, BitVector, ChainSpec, Epoch, EthSpec, Eth1Data, ForkName, MainnetEthSpec, ForkVersion, Hash256, SignedBeaconBlock, SignatureBytes, Slot, SyncCommittee};
 pub use serde::{Deserialize, Serialize};
 pub use std::sync::Arc;
 pub use std::fmt;
@@ -24,19 +24,15 @@ pub struct LightClientStore {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LightClientUpdate<T: EthSpec> {
     pub header: BeaconBlockHeader,
-    // TO DO: change to `SyncCommittee`
-    pub next_sync_committee: Arc<SyncCommittee<T>>,
+    // pub next_sync_committee: SyncCommittee<T>,
     // // TO DO: change to FixedVector<Hash256, T::SIZE_OF_VECTOR>,
     // pub next_sync_committee_branch: Vec<Hash256>,
     // pub finality_header: Option<BeaconBlockHeader>,
     // // TO DO: change to FixedVector<Hash256, T::SIZE_OF_VECTOR>,
     // pub finality_branch: Option<Vec<Hash256>>,
-    // // TO DO: change to BitVector<T::SyncCommitteeSize>
-    // pub sync_committee_bits: Vec<u8>,
-    // // TO DO: change to `AggregateSignature`
-    // pub sync_committee_signature: String,
-    // // ForkVersion is a [u8; 4]
-    // pub fork_version: ForkVersion
+    pub sync_committee_bits: BitVector<T::SyncCommitteeSize>,
+    pub sync_committee_signature: AggregateSignature,
+    pub fork_version: [u8; 4]
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -91,6 +87,29 @@ impl fmt::Display for BlockId {
             BlockId::Justified => write!(f, "justified"),
             BlockId::Slot(slot) => write!(f, "{}", slot),
             BlockId::Root(root) => write!(f, "{:?}", root),
+        }
+    }
+}
+
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub enum StateId {
+    Head,
+    Genesis,
+    Finalized,
+    Justified,
+    Slot(Slot),
+    Root(Hash256),
+}
+
+impl fmt::Display for StateId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            StateId::Head => write!(f, "head"),
+            StateId::Genesis => write!(f, "genesis"),
+            StateId::Finalized => write!(f, "finalized"),
+            StateId::Justified => write!(f, "justified"),
+            StateId::Slot(slot) => write!(f, "{}", slot),
+            StateId::Root(root) => write!(f, "{:?}", root),
         }
     }
 }
